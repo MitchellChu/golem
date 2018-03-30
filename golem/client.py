@@ -675,10 +675,17 @@ class Client(HardwarePresetsMixin):
         return self.create_task(task_dict)
 
     def restart_frame_subtasks(self, task_id, frame):
-        self.task_server.task_manager.restart_frame_subtasks(task_id, frame)
+        finished_before = self.task_server.task_manager.restart_frame_subtasks(
+            task_id, frame)
+        if finished_before:
+            self.funds_locker.add_subtasks(task_id, finished_before)
 
     def restart_subtask(self, subtask_id):
-        self.task_server.task_manager.restart_subtask(subtask_id)
+        was_finished_before =self.task_server.task_manager.restart_subtask(
+            subtask_id)
+        task_id = self.task_server.task_manager.subtask2task_mapping(subtask_id)
+        if was_finished_before:
+            self.funds_locker.add_subtasks(task_id)
 
     def delete_task(self, task_id):
         logger.debug('Deleting task "%r" ...', task_id)
